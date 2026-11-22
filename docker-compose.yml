@@ -1,0 +1,14 @@
+services:
+  songaudit:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      SONGAUDIT_DATA_DIR: /data
+      SONGAUDIT_MAX_UPLOAD_MB: "100"
+    volumes:
+      - songaudit-data:/data
+    restart: unless-stopped
+
+volumes:
+  songaudit-data:

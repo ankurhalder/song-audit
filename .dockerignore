@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.git
+.github
+.venv
+venv
+data/
+reports/
+out/
+*.wav
+*.mp3
+*.flac
+tests/

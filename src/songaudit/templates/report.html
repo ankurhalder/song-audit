@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }} - SongAudit</title>
+<style>
+  :root {
+    --bg: #06070b;
+    --panel: #0e1118;
+    --panel-2: #12161f;
+    --line: #1e2330;
+    --text: #e8eaf2;
+    --muted: #8b90a3;
+    --accent: #8b5cf6;
+    --teal: #22d3ee;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --green: #34d399;
+    --mono: "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 500px at 12% -8%, rgba(139, 92, 246, .16), transparent 60%),
+      radial-gradient(900px 420px at 92% 0%, rgba(34, 211, 238, .08), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", Inter, -apple-system, Roboto, sans-serif;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 34px 22px 70px; }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 18px; border-bottom: 1px solid var(--line);
+  }
+  .brand { font-weight: 700; letter-spacing: .14em; font-size: 12px; text-transform: uppercase; }
+  .brand span { color: var(--accent); }
+  .topbar .meta { color: var(--muted); font-size: 12px; font-family: var(--mono); }
+
+  .hero { display: flex; gap: 28px; align-items: flex-end; justify-content: space-between; padding: 34px 0 8px; }
+  .eyebrow { color: var(--accent); text-transform: uppercase; letter-spacing: .18em; font-size: 11px; margin: 0 0 8px; }
+  h1 { font-size: 40px; line-height: 1.12; margin: 0 0 8px; letter-spacing: -.02em; }
+  .artist { color: var(--muted); margin: 0 0 16px; font-size: 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    border: 1px solid var(--line); background: rgba(255,255,255,.02);
+    padding: 5px 10px; border-radius: 999px; font-size: 12px; color: var(--muted);
+    font-family: var(--mono);
+  }
+  .chip b { color: var(--text); font-weight: 600; }
+
+  .grade-wrap { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .tone {
+    font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted);
+    font-family: var(--mono);
+  }
+  .grade {
+    width: 150px; min-width: 150px; height: 150px; border-radius: 50%;
+    display: grid; place-items: center; text-align: center;
+    background: conic-gradient(var(--gc) calc(var(--p) * 1%), #191d28 0);
+    position: relative;
+  }
+  .grade::before {
+    content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--panel-2);
+  }
+  .grade div { position: relative; z-index: 1; }
+  .grade .num { font-size: 38px; font-weight: 700; line-height: 1; }
+  .grade .letter { font-size: 15px; color: var(--muted); letter-spacing: .18em; text-transform: uppercase; margin-top: 6px; }
+
+  .verdict {
+    margin: 22px 0 6px; padding: 16px 18px; border-radius: 14px;
+    background: linear-gradient(120deg, rgba(139,92,246,.14), rgba(34,211,238,.05));
+    border: 1px solid rgba(139,92,246,.28);
+  }
+  .verdict b { color: var(--text); }
+  .verdict span { color: var(--muted); }
+
+  h2 { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; font-weight: 600; }
+  .grid { display: grid; gap: 16px; }
+  .two { grid-template-columns: 1fr 1fr; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+  .card img { width: 100%; height: auto; display: block; border-radius: 8px; }
+
+  .scorecard { display: grid; grid-template-columns: 1.05fr .95fr; gap: 26px; align-items: center; margin-top: 18px; }
+  .cat { margin-bottom: 15px; }
+  .cat-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; margin-bottom: 6px; }
+  .cat-head .val { font-family: var(--mono); color: var(--muted); }
+  .bar { height: 7px; border-radius: 99px; background: #191d28; overflow: hidden; }
+  .bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--teal)); }
+  .cat-note { color: var(--muted); font-size: 11.5px; margin-top: 5px; font-family: var(--mono); }
+
+  .charts { display: grid; gap: 16px; margin-top: 26px; }
+  .recs { display: grid; gap: 10px; }
+  .rec { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--panel-2); border-left: 3px solid var(--muted); }
+  .rec.high { border-left-color: var(--red); }
+  .rec.medium { border-left-color: var(--amber); }
+  .rec.low { border-left-color: #60a5fa; }
+  .rec h3 { margin: 0 0 4px; font-size: 14.5px; }
+  .rec p { margin: 0 0 6px; color: var(--muted); font-size: 13px; }
+  .rec .fix { color: var(--text); font-size: 13px; }
+  .rec .fix b { color: var(--teal); font-weight: 600; }
+  .sev { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+  td.num, th.num { text-align: right; font-family: var(--mono); }
+  tr:last-child td { border-bottom: 0; }
+
+  .lyrics { white-space: pre-wrap; color: var(--text); font-size: 13.5px; line-height: 1.7; max-height: 420px; overflow: auto; padding-right: 6px; }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--mono); }
+  .hash { font-family: var(--mono); font-size: 11px; color: var(--muted); word-break: break-all; }
+  footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+  footer a { color: var(--teal); text-decoration: none; }
+
+  @media (max-width: 860px) {
+    .hero { flex-direction: column; align-items: flex-start; }
+    .scorecard, .two { grid-template-columns: 1fr; }
+    h1 { font-size: 30px; }
+  }
+  @media print {
+    body { background: #fff; color: #111; }
+    .card, .rec { background: #fff; border-color: #ddd; }
+    .grade::before { background: #fff; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="topbar">
+    <div class="brand">SONG<span>AUDIT</span></div>
+    <div class="meta">{{ r.generated_at }} &middot; schema {{ r.schema_version }} &middot; v{{ r.tool.version }}</div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Audio audit</p>
+      <h1>{{ title }}</h1>
+      <p class="artist">{{ artist }}</p>
+      <div class="chips">
+        <span class="chip"><b>{{ '%.0f'|format(r.file.duration_s // 60) }}:{{ '%02.0f'|format(r.file.duration_s % 60) }}</b> length</span>
+        <span class="chip"><b>{{ r.mastering.integrated_lufs }}</b> LUFS</span>
+        <span class="chip"><b>{{ r.mastering.true_peak_db }}</b> dBTP</span>
+        <span class="chip"><b>{{ r.music.bpm }}</b> BPM</span>
+        <span class="chip"><b>{{ r.music.key }}</b></span>
+        <span class="chip">{{ r.file.format }} &middot; {{ r.file.source_sample_rate }} Hz &middot; {{ r.file.channels }}ch</span>
+      </div>
+    </div>
+    <div class="grade-wrap">
+      <div class="grade" style="--gc: {{ grade_color }}; --p: {{ r.score.overall }}">
+        <div>
+          <div class="num">{{ '%.0f'|format(r.score.overall) }}</div>
+          <div class="letter">{{ r.score.grade }}</div>
+        </div>
+      </div>
+      <div class="tone">{{ tone }}</div>
+    </div>
+  </section>
+
+  <div class="verdict">
+    <b>{{ r.score.headline }}</b>
+    <span>&nbsp;{{ r.score.categories|length }} categories scored, {{ r.score.recommendations|length }} fixes suggested.</span>
+  </div>
+
+  <section class="card" style="margin-top: 18px;">
+    <h2>Scorecard</h2>
+    <div class="scorecard">
+      <div>
+        {% for c in r.score.categories %}
+        <div class="cat">
+          <div class="cat-head">
+            <span>{{ c.label }}</span>
+            <span class="val">{{ c.score }} / 100</span>
+          </div>
+          <div class="bar"><i style="width: {{ c.score }}%"></i></div>
+          <div class="cat-note">{{ c.note }} &middot; weight {{ (c.weight * 100)|round(0)|int }}%</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div>{% if charts.radar %}<img src="data:image/png;base64,{{ charts.radar }}" alt="Scorecard radar">{% endif %}</div>
+    </div>
+  </section>
+
+  <section class="charts">
+    {% if charts.waveform %}
+    <div class="card">
+      <h2>Waveform &amp; loudness over time</h2>
+      <img src="data:image/png;base64,{{ charts.waveform }}" alt="Waveform and loudness">
+      <p class="muted" style="font-size:12px;margin:10px 0 0;">
+        Teal markers are detected sections; the dashed line is the -14 LUFS streaming reference.
+      </p>
+    </div>
+    {% endif %}
+    {% if charts.spectrum %}
+    <div class="card">
+      <h2>Spectral balance</h2>
+      <img src="data:image/png;base64,{{ charts.spectrum }}" alt="Spectral balance">
+    </div>
+    {% endif %}
+    {% if charts.spectrogram %}
+    <div class="card">
+      <h2>Spectrogram</h2>
+      <img src="data:image/png;base64,{{ charts.spectrogram }}" alt="Spectrogram">
+    </div>
+    {% endif %}
+  </section>
+
+  <section class="card" style="margin-top: 26px;">
+    <h2>Recommended fixes</h2>
+    {% if r.score.recommendations %}
+    <div class="recs">
+      {% for rec in r.score.recommendations %}
+      <div class="rec {{ rec.severity }}">
+        <span class="sev">{{ rec.severity }} &middot; {{ rec.category }}</span>
+        <h3>{{ rec.title }}</h3>
+        <p>{{ rec.detail }}</p>
+        <div class="fix"><b>Fix:</b> {{ rec.fix }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted">Nothing blocking. The measurements are inside the targets this rubric checks.</p>
+    {% endif %}
+  </section>
+
+  <section class="grid two" style="margin-top: 26px;">
+    <div class="card">
+      <h2>Loudness &amp; dynamics</h2>
+      <table>
+        <tr><th>Integrated loudness</th><td class="num">{{ r.mastering.integrated_lufs }} LUFS</td></tr>
+        <tr><th>Loudest 3 s</th><td class="num">{{ r.mastering.loudest_short_term_lufs }} LUFS</td></tr>
+        <tr><th>Loudness range</th><td class="num">{{ r.mastering.loudness_range_lu }} LU</td></tr>
+        <tr><th>True peak</th><td class="num">{{ r.mastering.true_peak_db }} dBTP</td></tr>
+        <tr><th>Sample peak</th><td class="num">{{ r.mastering.sample_peak_db }} dBFS</td></tr>
+        <tr><th>Crest factor</th><td class="num">{{ r.mastering.crest_factor_db }} dB</td></tr>
+        <tr><th>Micro-dynamics</th><td class="num">{{ r.mastering.dynamic_range_db }} dB</td></tr>
+        <tr><th>Clipped samples</th><td class="num">{{ r.mastering.clipping.count }} ({{ r.mastering.clipping.percent }}%)</td></tr>
+        <tr><th>Longest clip run</th><td class="num">{{ r.mastering.clipping.longest_run }} samples</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Stereo &amp; cleanliness</h2>
+      <table>
+        <tr><th>Correlation</th><td class="num">{{ r.stereo.correlation }}</td></tr>
+        <tr><th>Width</th><td class="num">{{ r.stereo.width_percent }}%</td></tr>
+        <tr><th>Side / mid</th><td class="num">{{ r.stereo.side_mid_db }} dB</td></tr>
+        <tr><th>Mono fold-down</th><td class="num">{{ r.stereo.mono_loss_db }} dB</td></tr>
+        <tr><th>Channel balance</th><td class="num">{{ r.stereo.balance_db }} dB</td></tr>
+        <tr><th>Quietest frames (1%)</th><td class="num">{{ r.mastering.quiet_passage_db }} dBFS</td></tr>
+        <tr><th>DC offset</th><td class="num">{{ r.mastering.dc_offset|join(', ') }}</td></tr>
+        <tr><th>Head / tail silence</th><td class="num">{{ r.mastering.head_silence_s }} s / {{ r.mastering.tail_silence_s }} s</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Tonal balance</h2>
+      <table>
+        <tr><th>Band</th><th class="num">Level</th><th class="num">Deviation</th></tr>
+        {% for b in r.spectral.bands %}
+        <tr>
+          <td>{{ b.name|replace('_', ' ') }} <span class="muted">{{ b.lo_hz }}-{{ b.hi_hz }} Hz</span></td>
+          <td class="num">{{ b.rel_db }} dB</td>
+          <td class="num">{{ r.spectral.deviations_db.get(b.name, 0) }} dB</td>
+        </tr>
+        {% endfor %}
+        <tr><th>Tilt</th><td class="num" colspan="2">{{ r.spectral.tilt_db_per_octave }} dB/oct</td></tr>
+        <tr><th>99.9% rolloff</th><td class="num" colspan="2">{{ r.spectral.high_frequency_cutoff_hz }} Hz</td></tr>
+        <tr><th>Percussive share</th><td class="num" colspan="2">{{ (r.spectral.percussive_ratio * 100)|round(1) }}%</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Musical analysis</h2>
+      <table>
+        <tr><th>Tempo</th><td class="num">{{ r.music.bpm }} BPM ({{ (r.music.tempo_confidence * 100)|round(0)|int }}% conf.)</td></tr>
+        <tr><th>Key</th><td class="num">{{ r.music.key }} ({{ (r.music.key_confidence * 100)|round(0)|int }}% conf.)</td></tr>
+        <tr><th>Tuning</th><td class="num">{{ r.music.tuning_cents }} cents</td></tr>
+        <tr><th>Sections</th><td class="num">{{ r.music.section_count }}</td></tr>
+        <tr><th>Hard ending</th><td class="num">{{ 'yes' if r.music.hard_ending else 'no' }}</td></tr>
+        <tr><th>Beats tracked</th><td class="num">{{ r.music.beat_count }}</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top: 16px;">
+    <h2>Detected sections</h2>
+    <table>
+      <tr><th>#</th><th>Label</th><th class="num">Start</th><th class="num">End</th><th class="num">Length</th><th class="num">RMS</th></tr>
+      {% for s in r.music.sections %}
+      <tr>
+        <td>{{ s.index }}</td>
+        <td>{{ s.label }}</td>
+        <td class="num">{{ s.start_s }} s</td>
+        <td class="num">{{ s.end_s }} s</td>
+        <td class="num">{{ s.duration_s }} s</td>
+        <td class="num">{{ s.rms_db }} dBFS</td>
+      </tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  {% if r.lyrics %}
+  <section class="card" style="margin-top: 16px;">
+    <h2>Vocals &amp; lyrics</h2>
+    <div class="chips" style="margin-bottom: 14px;">
+      <span class="chip">language <b>{{ r.lyrics.language or 'unknown' }}</b></span>
+      <span class="chip"><b>{{ r.lyrics.word_count }}</b> words</span>
+      <span class="chip"><b>{{ r.lyrics.words_per_minute }}</b> words/min</span>
+      <span class="chip"><b>{{ (r.lyrics.vocal_coverage * 100)|round(0)|int }}%</b> vocal coverage</span>
+      <span class="chip"><b>{{ (r.lyrics.repetition_ratio * 100)|round(0)|int }}%</b> repeated phrases</span>
+    </div>
+    <div class="lyrics">{{ r.lyrics.transcript }}</div>
+  </section>
+  {% endif %}
+
+  <section class="card" style="margin-top: 16px;">
+    <h2>File &amp; provenance</h2>
+    <table>
+      <tr><th>Source</th><td>{{ r.source.kind }} &middot; {{ r.source.filename }}</td></tr>
+      <tr><th>Format</th><td>{{ r.file.format }} / {{ r.file.subtype }} &middot; {{ r.file.channels }} channel(s)</td></tr>
+      <tr><th>Sample rate</th><td>{{ r.file.source_sample_rate }} Hz (analyzed at {{ r.file.sample_rate }} Hz)</td></tr>
+      <tr><th>Size</th><td>{{ '%.2f'|format(r.source.bytes / 1048576) }} MB</td></tr>
+      <tr><th>SHA-256</th><td class="hash">{{ r.source.sha256 }}</td></tr>
+      {% for key, value in r.tags.items() %}
+      <tr><th>{{ key }}</th><td>{{ value }}</td></tr>
+      {% endfor %}
+    </table>
+  </section>
+
+  <section class="card" style="margin-top: 16px;">
+    <h2>How to read this</h2>
+    <p class="muted" style="font-size:13px;margin:0 0 10px;">
+      Loudness follows ITU-R BS.1770-4 (LUFS) with 4x oversampled true-peak detection.
+      Tonal balance compares octave-band energy with the track's own fitted tilt, so it measures
+      balance rather than a fixed "correct" curve. Key and tempo use librosa's chroma and beat
+      trackers; sections come from agglomerative clustering of chroma and are heuristic.
+    </p>
+    <p class="muted" style="font-size:13px;margin:0;">
+      This audit is not a plagiarism check, not an AI-generation detector, and not a substitute for a
+      mastering engineer who knows the genre. Targets are streaming-oriented (-14 LUFS, -1 dBTP).
+      Scores describe measured signals, not taste.
+    </p>
+  </section>
+
+  <footer>
+    Generated by <a href="https://github.com/ankurhalder/song-audit">SongAudit</a> v{{ r.tool.version }}
+    {% if json_url %} &middot; <a href="{{ json_url }}">download JSON</a>{% endif %}
+    &middot; audio is processed locally and never uploaded by this report.
+  </footer>
+</div>
+</body>
+</html>

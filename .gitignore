@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Runtime output
+data/
+out/
+reports/
+demo/
+inbox/
+
+# Local tooling
+.wheels/
+*.log
+.wheel*
+
+
+# Media (never commit customer audio)
+*.wav
+*.mp3
+*.flac
+*.m4a
+*.aac
+*.ogg
+*.opus
+!.keep
+
+# Env / OS
+.env
+.DS_Store
+Thumbs.db
