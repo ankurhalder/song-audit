@@ -154,7 +154,8 @@ More detail in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
     pytest
 
 Tests build their audio procedurally (clicks, chords, clipped tones), so the repo carries no
-copyrighted media. Optional extras: pip install -e ".[lyrics]" for Whisper, ".[fetch]" for yt-dlp.
+copyrighted media. Optional extras: pip install -e ".[capture]" for loopback recording,
+".[lyrics]" for Whisper, ".[fetch]" for yt-dlp.
 
 ## Privacy
 
