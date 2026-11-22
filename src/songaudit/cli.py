@@ -80,6 +80,35 @@ def cmd_serve(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_open(args: argparse.Namespace) -> int:
+    from .browser_fetch import fetch
+
+    out_dir = Path(args.out) if args.out else Path("reports") / _slug("song")
+    try:
+        track = fetch(args.url, out_dir / "source" / "track.mp3", timeout=args.timeout,
+                      channel=args.browser, headless=False)
+    except SystemExit as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+
+    report, paths = audit_to_dir(track, out_dir, "browser", args.url, args.lyrics)
+    _print_summary(report, paths)
+    webbrowser.open(paths["html"].resolve().as_uri())
+    return 0
+
+
+def cmd_fetch(args: argparse.Namespace) -> int:
+    from .browser_fetch import fetch
+
+    try:
+        fetch(args.url, args.out, timeout=args.timeout,
+              channel=args.browser, headless=args.headless)
+    except SystemExit as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
+    return 0
+
+
 def cmd_capture(args: argparse.Namespace) -> int:
     from .capture import capture
 
@@ -116,6 +145,22 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8000)
     serve.set_defaults(func=cmd_serve)
+
+    opener = sub.add_parser("open", help="Open a song in the built-in browser, save the source file, audit it.")
+    opener.add_argument("url")
+    opener.add_argument("-o", "--out", help="Output directory (default: reports/song).")
+    opener.add_argument("--timeout", type=float, default=600.0)
+    opener.add_argument("--browser", default=None, help="Browser channel, e.g. msedge or chrome.")
+    opener.add_argument("--lyrics", action="store_true")
+    opener.set_defaults(func=cmd_open)
+
+    fetch = sub.add_parser("fetch", help="Save a track from a page behind a login (uses a local browser).")
+    fetch.add_argument("url")
+    fetch.add_argument("-o", "--out", default="inbox/track.mp3")
+    fetch.add_argument("--timeout", type=float, default=300.0)
+    fetch.add_argument("--browser", default=None, help="Browser channel, e.g. msedge or chrome.")
+    fetch.add_argument("--headless", action="store_true")
+    fetch.set_defaults(func=cmd_fetch)
 
     capture = sub.add_parser("capture", help="Record what this machine is playing, then audit it.")
     capture.add_argument("--output", help="Where to write the recording (default: capture.wav).")
