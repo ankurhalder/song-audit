@@ -85,7 +85,8 @@ def cmd_capture(args: argparse.Namespace) -> int:
 
     output = args.output or "capture.wav"
     try:
-        path = capture(output, seconds=args.seconds, device=args.device)
+        path = capture(output, seconds=args.seconds, device=args.device,
+                       wait_for_start=args.wait, wait_timeout=args.wait_timeout)
     except SystemExit as exc:
         print(str(exc), file=sys.stderr)
         return 2
@@ -120,6 +121,10 @@ def build_parser() -> argparse.ArgumentParser:
     capture.add_argument("--output", help="Where to write the recording (default: capture.wav).")
     capture.add_argument("--seconds", type=float, default=None, help="Hard stop after N seconds.")
     capture.add_argument("--device", default=None, help="Loopback device name substring.")
+    capture.add_argument("--wait", action="store_true",
+                         help="Arm the recorder and start writing only when audio plays.")
+    capture.add_argument("--wait-timeout", type=float, default=300.0,
+                         help="Give up waiting for playback after N seconds (default 300).")
     capture.add_argument("--audit", action="store_true", help="Run the audit after recording.")
     capture.add_argument("--out", help="Audit output directory (with --audit).")
     capture.add_argument("--lyrics", action="store_true")

@@ -39,3 +39,7 @@ inbox/
 .env
 .DS_Store
 Thumbs.db
+
+# Scratch
+.suno-dom.html
+.inspect_dom.py

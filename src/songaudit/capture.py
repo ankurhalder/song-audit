@@ -7,6 +7,7 @@ BlackHole; on Linux the PulseAudio monitor source is used.
 
 from __future__ import annotations
 
+import collections
 import sys
 import time
 
@@ -52,7 +53,13 @@ def pick_device(device: str | None = None):
 
 
 def capture(output: str, seconds: float | None = None, device: str | None = None,
-            samplerate: int = 48000, silence_stop: float = 4.0, min_seconds: float = 8.0) -> str:
+            samplerate: int = 48000, silence_stop: float = 5.0, min_seconds: float = 8.0,
+            wait_for_start: bool = False, wait_timeout: float = 300.0) -> str:
+    """Record the loopback stream to a WAV file.
+
+    wait_for_start keeps the recorder armed and begins writing only when audio
+    actually plays, so the head of the track is not cut off.
+    """
     import soundcard as sc
 
     mic = pick_device(device)
@@ -60,23 +67,51 @@ def capture(output: str, seconds: float | None = None, device: str | None = None
     frames = int(samplerate * block)
 
     print("Capturing from: " + mic.name, file=sys.stderr)
-    print("Play the track now. Recording stops on silence, Ctrl+C, or the time limit.", file=sys.stderr)
+    if wait_for_start:
+        print("Armed. Press play in the browser; recording starts with the audio.", file=sys.stderr)
+    else:
+        print("Recording now. Ctrl+C or the time limit stops it.", file=sys.stderr)
 
-    started = time.time()
+    armed_at = time.time()
+    started_at = None
     silence = 0.0
     total = 0.0
     heard = 0.0
     loud = False
+    waiting = wait_for_start
+    prebuffer = collections.deque(maxlen=max(1, int(2.0 / block)))
+    wrote_anything = False
 
     with mic.recorder(samplerate=samplerate, channels=2) as recorder:
         with sf.SoundFile(output, "w", samplerate=samplerate, channels=2, subtype="PCM_16") as handle:
             while True:
-                chunk = recorder.record(numframes=frames)
-                chunk = np.asarray(chunk, dtype=np.float32)
+                chunk = np.asarray(recorder.record(numframes=frames), dtype=np.float32)
+                level = float(np.sqrt(np.mean(chunk ** 2))) if chunk.size else 0.0
+
+                if waiting:
+                    prebuffer.append(chunk)
+                    if level > 1e-4:
+                        heard += block
+                    if heard >= 0.5:
+                        waiting = False
+                        started_at = time.time()
+                        for buffered in prebuffer:
+                            handle.write(buffered)
+                            total += len(buffered) / samplerate
+                        prebuffer.clear()
+                        wrote_anything = True
+                        loud = True
+                        continue
+                    if time.time() - armed_at > wait_timeout:
+                        print("Nothing started playing within the wait window.", file=sys.stderr)
+                        break
+                    print("\rarmed  %.1f s  waiting for audio..." % (time.time() - armed_at),
+                          end="", file=sys.stderr, flush=True)
+                    continue
+
                 handle.write(chunk)
                 total += block
 
-                level = float(np.sqrt(np.mean(chunk ** 2))) if chunk.size else 0.0
                 if level > 1e-4:
                     heard += block
                     if heard >= 2.0:
@@ -86,7 +121,7 @@ def capture(output: str, seconds: float | None = None, device: str | None = None
                 elif loud:
                     silence += block
 
-                elapsed = time.time() - started
+                elapsed = time.time() - (started_at or time.time())
                 bars = int(min(1.0, level * 8) * 18)
                 print(
                     "\r%6.1f s  [%s%s]  %.4f" % (total, "#" * bars, "." * (18 - bars), level),
@@ -101,4 +136,6 @@ def capture(output: str, seconds: float | None = None, device: str | None = None
                     break
 
     print("", file=sys.stderr)
+    if not wrote_anything:
+        raise SystemExit("Recording aborted: no audio was captured.")
     return output
