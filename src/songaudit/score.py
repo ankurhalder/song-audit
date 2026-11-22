@@ -294,6 +294,14 @@ def score_report(report: dict) -> dict:
 
     overall = round(overall, 1)
     grade = grade_for(overall)
+    if grade in ("A+", "A", "A-") and recommendations:
+        if any(item["severity"] == "high" for item in recommendations):
+            headline_override = "Strong master, but fix the flagged issues first."
+        else:
+            headline_override = "Strong master with a short list of fixes."
+    else:
+        headline_override = None
+
     headline = {
         "A+": "Release-ready. Nothing blocking.",
         "A": "Release-ready with minor polish.",
@@ -306,6 +314,8 @@ def score_report(report: dict) -> dict:
         "D": "Significant issues to fix.",
         "F": "Not release-ready yet.",
     }[grade]
+    if headline_override:
+        headline = headline_override
 
     return {
         "overall": overall,

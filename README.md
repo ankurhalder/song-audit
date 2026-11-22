@@ -108,6 +108,9 @@ Examples:
 
 Grades: A+ >= 95, A >= 90, A- >= 85, B+ >= 80, B >= 75, B- >= 70, C+ >= 65, C >= 60, D >= 50, F below.
 
+A master more than 6 LU away from the -14 LUFS streaming reference is capped at B+, and more than
+10 LU away at B-, however clean everything else measures.
+
 Targets are streaming-oriented. Club and vinyl deliveries want different loudness; the report says so
 rather than pretending one target fits everything.
 

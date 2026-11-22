@@ -65,6 +65,7 @@ def capture(output: str, seconds: float | None = None, device: str | None = None
     started = time.time()
     silence = 0.0
     total = 0.0
+    heard = 0.0
     loud = False
 
     with mic.recorder(samplerate=samplerate, channels=2) as recorder:
@@ -77,8 +78,11 @@ def capture(output: str, seconds: float | None = None, device: str | None = None
 
                 level = float(np.sqrt(np.mean(chunk ** 2))) if chunk.size else 0.0
                 if level > 1e-4:
-                    loud = True
-                    silence = 0.0
+                    heard += block
+                    if heard >= 2.0:
+                        loud = True
+                    if loud:
+                        silence = 0.0
                 elif loud:
                     silence += block
 
@@ -91,7 +95,7 @@ def capture(output: str, seconds: float | None = None, device: str | None = None
 
                 if seconds and total >= seconds:
                     break
-                if loud and total > min_seconds and silence >= silence_stop:
+                if loud and total > max(min_seconds, 15.0) and silence >= silence_stop:
                     break
                 if elapsed > (seconds or 900):
                     break

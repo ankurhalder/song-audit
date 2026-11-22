@@ -100,7 +100,8 @@ def analyze_mastering(data: np.ndarray, sr: int) -> dict:
     energies = frame_energies(mono, frame, max(1, frame // 2))
     frame_db = db_pow(energies)
     quiet = percentile(frame_db, 1)
-    dynamic_range = percentile(frame_db, 95) - quiet
+    active = frame_db[frame_db > -70.0]
+    dynamic_range = (percentile(active, 95) - percentile(active, 10)) if active.size else 0.0
 
     silent = np.abs(mono) <= 1e-3
     above = np.flatnonzero(~silent)
